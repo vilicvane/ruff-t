@@ -7,6 +7,7 @@ import * as Util from 'util';
 
 import { stylize, indent } from './utils';
 
+export type MultipleDoneHandler = () => void;
 export type DoneCallback = (error: any) => void;
 export type ScopeHandler = (scope: Scope) => void;
 export type GeneralHandler = (done?: DoneCallback) => Promise<void> | void;
@@ -89,7 +90,7 @@ export abstract class Runnable {
         let descriptions: string[] = [];
         let node: Runnable = this;
 
-        while (node) {
+        while (node.upper) {
             descriptions.unshift(node.description);
             node = node.upper;
         }
@@ -112,30 +113,79 @@ export class Test extends Runnable {
     }
 
     run(index: number, runnables: (Scope | Test)[]): Promise<void> {
-        let uncaughtExceptionPromise = new Promise<void>((resolve, reject) => {
-            activeUncaughtExceptionHandler = reject;
-        });
+        return new Promise<void>(resolve => {
+            let timer = setTimeout(() => handleError(new Error('Test timed out')), this.upper.timeout);
 
-        let testPromise = invokeGeneralCallback(this.handler);
+            let handleSuccess = () => {
+                if (this.state !== TestState.pending) {
+                    return;
+                }
 
-        return Promise
-            .race<void>([
-                uncaughtExceptionPromise,
-                testPromise
-            ])
-            .then(() => {
+                clearTimeout(timer);
+
                 this.state = TestState.passed;
+
                 this.print(stylize('>', 'green'), stylize(this.description, 'gray'));
-            }, reason => {
+
+                resolve();
+            };
+
+            let handleError = (error: any) => {
+                if (this.state === TestState.failed) {
+                    return;
+                }
+
+                clearTimeout(timer);
+
                 this.state = TestState.failed;
-                let count = this.upper.errorCollector.add(this.fullDescription, reason);
+
+                let count = this.upper.errorCollector.add(this.fullDescription, error);
                 this.print(stylize(count + ')', 'red'), stylize(this.description, 'red'));
-            });
+
+                resolve();
+            };
+
+            activeUncaughtExceptionHandler = handleError;
+
+            let handler = this.handler;
+
+            if (handler.length) {
+                let called = false;
+
+                try {
+                    handler(error => {
+                        if (called) {
+                            handleError(new Error('Callback `done` is called multiple times'));
+                            return;
+                        }
+
+                        called = true;
+
+                        if (error) {
+                            handleError(error);
+                        } else {
+                            handleSuccess();
+                        }
+                    });
+                } catch (error) {
+                    handleError(error);
+                }
+            } else {
+                fulfilled
+                    .then(() => handler())
+                    .then(() => {
+                        handleSuccess();
+                    }, reason => {
+                        handleError(reason);
+                    });
+            }
+        });
     }
 }
 
 export class Scope extends Runnable {
     runnables: (Scope | Test)[] = [];
+    timeout = 2000;
 
     private _beforeHandler: GeneralHandler;
     private _beforeEachHandler: GeneralHandler;
@@ -179,8 +229,22 @@ export class Scope extends Runnable {
         };
     }
 
+    get hasTests(): boolean {
+        for (let runnable of this.runnables) {
+            if (runnable instanceof Scope) {
+                if (runnable.hasTests) {
+                    return true;
+                }
+            } else {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     run(index: number, runnables: (Scope | Test)[]): Promise<void> {
-        if (this.upper) {
+        if (this.upper && this.hasTests) {
             this.print(stylize(this.description, 'bold'));
         }
 
@@ -320,6 +384,8 @@ function start() {
     setTimeout(() => {
         activeScope
             .run(0, [root])
+            // Delay for multiple `done` check.
+            .then(() => new Promise(resolve => setTimeout(resolve, 0)))
             .then(() => {
                 console.log('\n');
 
@@ -347,25 +413,21 @@ function start() {
 
 function invokeOptionalGeneralCallback(handler: GeneralHandler): Promise<void> {
     if (handler) {
-        return invokeGeneralCallback(handler);
+        if (handler.length) {
+            return new Promise<void>((resolve, reject) => {
+                handler(error => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        } else {
+            return fulfilled.then(() => handler());
+        }
     } else {
         return fulfilled;
-    }
-}
-
-function invokeGeneralCallback(handler: GeneralHandler): Promise<void> {
-    if (handler.length) {
-        return new Promise<void>((resolve, reject) => {
-            handler(error => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
-    } else {
-        return fulfilled.then(() => handler());
     }
 }
 
