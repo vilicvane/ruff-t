@@ -13,9 +13,7 @@ rap install t
 **test.js**
 
 ```js
-var T = require('t');
-var describe = T.describe;
-var it = T.it;
+require('t');
 
 describe('A scope', function () {
     it('should pass', function (done) {

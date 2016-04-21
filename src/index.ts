@@ -303,6 +303,12 @@ export function afterEach(handler: GeneralHandler): void {
     activeScope.afterEach(handler);
 }
 
+let globalExports = ['describe', 'it', 'before', 'beforeEach', 'after', 'afterEach'];
+
+for (let key of globalExports) {
+    Object.defineProperty(global, key, { value: exports[key] });
+}
+
 function start() {
     let errorCollector = new ErrorCollector();
     let root = new Scope(undefined, errorCollector, 'ROOT');
