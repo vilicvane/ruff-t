@@ -8,7 +8,7 @@ import * as Util from 'util';
 import { stylize, indent } from './utils';
 
 export type MultipleDoneHandler = () => void;
-export type DoneCallback = (error: any) => void;
+export type DoneCallback = (error?: any) => void;
 export type ScopeHandler = (scope: Scope) => void;
 export type GeneralHandler = (done?: DoneCallback) => Promise<void> | void;
 
