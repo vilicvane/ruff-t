@@ -1,7 +1,7 @@
 import {
     ScopeHandler,
     GeneralHandler
-} from '../bld/';
+} from './bld/';
 
 export declare function describe(description: string, handler: ScopeHandler): void;
 export declare function it(description: string, handler: GeneralHandler): void;
