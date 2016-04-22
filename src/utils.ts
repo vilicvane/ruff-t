@@ -46,3 +46,9 @@ export function indent(text: string, level: number) {
     let prefix = Array(level + 1).join('  ');
     return text.replace(/^/gm, prefix);
 }
+
+export function delay(timeout: number): Promise<void>;
+export function delay<T>(timeout: number, value: T): Promise<T>;
+export function delay<T>(timeout: number, value?: T): Promise<T> {
+    return new Promise<T>(resolve => setTimeout(resolve, timeout, value));
+}

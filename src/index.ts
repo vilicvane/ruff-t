@@ -5,9 +5,8 @@ if (typeof Promise !== 'function') {
 import * as Path from 'path';
 import * as Util from 'util';
 
-import { stylize, indent } from './utils';
+import { stylize, indent, delay } from './utils';
 
-export type MultipleDoneHandler = () => void;
 export type DoneCallback = (error?: any) => void;
 export type ScopeHandler = (scope: Scope) => void;
 export type GeneralHandler = (done?: DoneCallback) => Promise<void> | void;
@@ -82,7 +81,7 @@ export abstract class Runnable {
 
             console.log(first, ...objects.slice(1));
         } else {
-            console.log();
+            console.log('');
         }
     }
 
@@ -335,21 +334,13 @@ process.on('uncaughtException', (error: any) => {
     }
 });
 
-let started = false;
-
 export function describe(description: string, handler: ScopeHandler): void {
-    if (!started) {
-        start();
-        started = true;
-    }
-
     activeScope.describe(description, handler);
 }
 
 export function it(description: string, handler: GeneralHandler): void {
     activeScope.it(description, handler);
 }
-
 
 export function before(handler: GeneralHandler): void {
     activeScope.before(handler);
@@ -373,42 +364,58 @@ for (let key of globalExports) {
     Object.defineProperty(global, key, { value: exports[key] });
 }
 
+let errorCollector = new ErrorCollector();
+let rootScope = new Scope(undefined, errorCollector, 'ROOT');
+
+activeScope = rootScope;
+
+let started = false;
+
+setTimeout(start, 0);
+
 function start() {
-    let errorCollector = new ErrorCollector();
-    let root = new Scope(undefined, errorCollector, 'ROOT');
+    started = true;
 
-    activeScope = root;
+    console.log('');
 
-    console.log();
+    return activeScope
+        .run(0, [rootScope])
+        // Delay for multiple `done` check.
+        .then(() => delay(0))
+        .then(() => {
+            console.log('\n');
 
-    setTimeout(() => {
-        activeScope
-            .run(0, [root])
-            // Delay for multiple `done` check.
-            .then(() => new Promise(resolve => setTimeout(resolve, 0)))
-            .then(() => {
-                console.log('\n');
+            let { passed, failed } = rootScope.stats;
 
-                let { passed, failed } = root.stats;
+            if (passed || !failed) {
+                console.log(indent(stylize(`${passed} passing`, 'green'), 1));
+            }
 
-                if (passed || !failed) {
-                    console.log(indent(stylize(`${passed} passing`, 'green'), 1));
-                }
+            if (failed) {
+                console.log(indent(stylize(`${failed} failing`, 'red'), 1));
+            }
 
-                if (failed) {
-                    console.log(indent(stylize(`${failed} failing`, 'red'), 1));
-                }
+            rootScope.errorCollector.print();
+            console.log('\n');
 
-                errorCollector.print();
-                console.log('\n');
+            return delay(200);
+        })
+        .then(() => {
+            if (rootScope.errorCollector.empty) {
+                process.exit(0)
+            } else {
+                process.exit(1);
+            }
+        });
+}
 
-                if (errorCollector.empty) {
-                    process.exit(0);
-                } else {
-                    process.exit(1);
-                }
-            });
-    }, 0);
+export function queue(path: string): void {
+    if (started) {
+        exitWithError(new Error('Test has already been started'));
+        return;
+    }
+
+    require(Path.resolve(path));
 }
 
 function invokeOptionalGeneralCallback(handler: GeneralHandler): Promise<void> {
