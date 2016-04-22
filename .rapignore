@@ -5,6 +5,7 @@ bld/test/**
 bld/debug/**
 test/**
 typings/**
+debug/**
 
 .*
 
