@@ -170,13 +170,25 @@ export class Test extends Runnable {
                     handleError(error);
                 }
             } else {
-                fulfilled
-                    .then(() => handler())
-                    .then(() => {
+                let resolvableResult: Promise<void> | void;
+
+                try {
+                    resolvableResult = handler();
+
+                    if (resolvableResult === undefined) {
                         handleSuccess();
-                    }, reason => {
-                        handleError(reason);
-                    });
+                    } else {
+                        Promise
+                            .resolve(resolvableResult)
+                            .then(() => {
+                                handleSuccess();
+                            }, reason => {
+                                handleError(reason);
+                            })
+                    }
+                } catch (error) {
+                    handleError(error);
+                }
             }
         });
     }
