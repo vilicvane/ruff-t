@@ -1,4 +1,4 @@
-Testing Framework for Ruff.
+# Testing Framework for Ruff
 
 GitHub <https://github.com/vilic/ruff-t>
 
