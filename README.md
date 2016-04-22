@@ -84,14 +84,14 @@ describe('Some scope', function () {
 });
 ```
 
-Run `ruff test.js` and you will get following output:
-
-<img src="https://cloud.githubusercontent.com/assets/970430/14731035/51a518ae-087f-11e6-9925-1e3530c48dd4.png" alt="T output" width="600" />
-
 Handlers passed to `before`, `after`, `beforeEach`, `afterEach` and `it` can be synchronous or asynchronous:
 
 - If a `done` (name does not matter) parameter exists, T will wait for it to be called. An error object can be passed in just like Mocha.
 - Otherwise, T will try to resolve the return value and if it's a promise, T respects its result.
+
+Run `ruff test.js` and you will get following output:
+
+<img src="https://cloud.githubusercontent.com/assets/970430/14731035/51a518ae-087f-11e6-9925-1e3530c48dd4.png" alt="T output" width="600" />
 
 ## License
 
