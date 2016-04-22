@@ -14,6 +14,7 @@
     "exclude": [
         "bld",
         "test",
-        "node_modules"
+        "node_modules",
+        "t.d.ts"
     ]
 }
