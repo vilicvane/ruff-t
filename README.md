@@ -84,7 +84,11 @@ describe('Some scope', function () {
 });
 ```
 
-Run `ruff test.js` to execute the test.
+Run `ruff test.js` and you will get following output:
+
+<div style="text-align: center;">
+    <img src="https://cloud.githubusercontent.com/assets/970430/14731035/51a518ae-087f-11e6-9925-1e3530c48dd4.png" alt="T output" width="600" />
+</div>
 
 Handlers passed to `before`, `after`, `beforeEach`, `afterEach` and `it` can be synchronous or asynchronous:
 
