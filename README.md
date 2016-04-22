@@ -57,11 +57,15 @@ describe('Some scope', function () {
     });
 
     it('should pass in 100 ms (promise)', function () {
-        return Promise.resolve();
+        return new Promise(resolve => {
+            setTimeout(resolve, 100);
+        });
     });
 
     it('should fail in 100 ms (promise)', function () {
-        return Promise.reject(new Error());
+        return new Promise((resolve, reject) => {
+            setTimeout(reject, 100, new Error());
+        });
     });
 
     describe('Some subscope', function (scope) {
@@ -84,7 +88,7 @@ describe('Some scope', function () {
 });
 ```
 
-Handlers passed to `before`, `after`, `beforeEach`, `afterEach` and `it` can be synchronous or asynchronous:
+Handlers passed to `before`, `after`, `beforeEach`, `afterEach` and `it` can either synchronous or asynchronous:
 
 - If a `done` (name does not matter) parameter exists, T will wait for it to be called. An error object can be passed in just like Mocha.
 - Otherwise, T will try to resolve the return value and if it's a promise, T respects its result.
