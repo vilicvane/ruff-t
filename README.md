@@ -15,7 +15,7 @@ rap install t
 ```js
 require('t');
 
-describe('A scope', function () {
+describe('Some scope', function () {
     before(function () {
         // Before all tests in this scope.
     });
@@ -32,18 +32,54 @@ describe('A scope', function () {
         // After each test in this scope.
     });
 
-    it('should pass', function (done) {
-        setTimeout(done, 100);
-    });
+    it('should pass immediately', function () { });
 
-    it('should fail', function () {
+    it('should fail immediately', function () {
         throw new Error();
     });
 
-    describe('A sub scope', function () {
-        // Sub scope.
+    describe('Some subscope', function () {
+        it('should pass immediately', function () { });
 
-        it('should pass', function () { });
+        it('should fail immediately', function () {
+            throw new Error();
+        });
+    });
+
+    it('should pass in 100 ms (callback)', function (done) {
+        setTimeout(done, 100);
+    });
+
+    it('should fail in 100 ms (callback)', function (done) {
+        setTimeout(function () {
+            done(new Error());
+        }, 100);
+    });
+
+    it('should pass in 100 ms (promise)', function () {
+        return Promise.resolve();
+    });
+
+    it('should fail in 100 ms (promise)', function () {
+        return Promise.reject(new Error());
+    });
+
+    describe('Some subscope', function (scope) {
+        // Set timeout (default to 2000 ms).
+        scope.timeout = 200;
+
+        it('should pass then fail due to multiple invocations of `done`', function (done) {
+            done();
+            done();
+        });
+
+        it('should fail due to an uncaught exception during this test', function (done) {
+            setTimeout(function () {
+                throw new Error();
+            }, 100);
+        });
+
+        it('should fail due to time out', function (done) { });
     });
 });
 ```
