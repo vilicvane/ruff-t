@@ -36,7 +36,7 @@ const styleSequenceMap: Dictionary<[number, number]> = {
 export function stylize(text: string, styleName: string): string {
     if (hop.call(styleSequenceMap, styleName)) {
         let sequence = styleSequenceMap[styleName];
-        return `\u001b[${styleSequenceMap[styleName][0]}m${text}\u001b[${styleSequenceMap[styleName][1]}m`;
+        return `\u001b[${sequence[0]}m${text}\u001b[${sequence[1]}m`;
     } else {
         return text;
     }
