@@ -57,13 +57,13 @@ describe('Some scope', function () {
     });
 
     it('should pass in 100 ms (promise)', function () {
-        return new Promise(resolve => {
+        return new Promise(function (resolve) {
             setTimeout(resolve, 100);
         });
     });
 
     it('should fail in 100 ms (promise)', function () {
-        return new Promise((resolve, reject) => {
+        return new Promise(function (resolve, reject) {
             setTimeout(reject, 100, new Error());
         });
     });
