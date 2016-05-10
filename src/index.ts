@@ -13,6 +13,11 @@ export type GeneralHandler = (done?: DoneCallback) => Promise<void> | void;
 
 type UncaughtExceptionHandler = (error: any) => void;
 
+export interface ErrorItem {
+    description: string;
+    error: any;
+}
+
 export interface Stats {
     passed: number;
     failed: number;
@@ -28,10 +33,9 @@ export const enum TestState {
 const fulfilled = Promise.resolve();
 const pending = new Promise<void>(() => { });
 
-export interface ErrorItem {
-    description: string;
-    error: any;
-}
+export const options = {
+    timeout: 2000
+};
 
 export class ErrorCollector {
     items: ErrorItem[] = [];
@@ -196,7 +200,7 @@ export class Test extends Runnable {
 
 export class Scope extends Runnable {
     runnables: (Scope | Test)[] = [];
-    timeout = 2000;
+    timeout = options.timeout;
 
     private _beforeHandler: GeneralHandler;
     private _beforeEachHandler: GeneralHandler;
