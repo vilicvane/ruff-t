@@ -397,7 +397,7 @@ function start() {
     return activeScope
         .run(0, [rootScope])
         // Delay for multiple `done` check.
-        .then(() => delay(0))
+        .then(() => delay(200))
         .then(() => {
             console.log('\n');
 
@@ -413,8 +413,6 @@ function start() {
 
             rootScope.errorCollector.print();
             console.log('\n');
-
-            return delay(200);
         })
         .then(() => {
             if (rootScope.errorCollector.empty) {
